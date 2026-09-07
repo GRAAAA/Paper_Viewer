@@ -12,14 +12,18 @@ function Check([bool]$Condition, [string]$Name) {
     Write-Host "PASS: $Name"
 }
 function Run-Management([string]$Action, [int]$Expected = 0, [string]$Script = $manager) {
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $Script -Command $Action -Source $ReleaseExe -InstallDirectory $install -ShortcutPath $shortcut -LogPath $log -SkipPath
+    $messages = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $Script -Command $Action -Source $ReleaseExe -InstallDirectory $install -ShortcutPath $shortcut -LogPath $log -SkipPath
     Check ($LASTEXITCODE -eq $Expected) "$Action exits $Expected"
+    $messages | Write-Host
+    Check ([bool]($messages -match '\]\s+0%')) "$Action shows starting progress"
+    Check (([bool]($messages -match '\]\s+100%')) -eq ($Expected -eq 0)) "$Action only reaches 100% on success"
 }
 function Run-Cli([string]$Argument, [int]$Expected) {
     $start = [Diagnostics.ProcessStartInfo]::new($ReleaseExe, $Argument)
     $start.UseShellExecute = $false
     $start.RedirectStandardOutput = $true
     $start.RedirectStandardError = $true
+    $start.EnvironmentVariables['LOCALAPPDATA'] = $root
     $process = [Diagnostics.Process]::Start($start)
     $stdout = $process.StandardOutput.ReadToEnd()
     $stderr = $process.StandardError.ReadToEnd()
@@ -31,6 +35,7 @@ function Run-Cli([string]$Argument, [int]$Expected) {
 Check ((Run-Cli '--version' 0) -match 'PaperView 1.0.0') 'Published executable reports its version'
 Run-Cli '--help' 0
 Run-Cli 'not-a-command' 2
+Check ((Run-Cli 'uninstall' 1) -match '\]\s+0%') 'Published executable relays child progress and failure output'
 Run-Management uninstall 1
 Run-Management install
 Check (Test-Path -LiteralPath (Join-Path $install 'PaperView.exe')) 'Install copies executable'
@@ -51,9 +56,20 @@ function Make-Mock([string]$Tag, [string]$Digest, [string]$Name) {
     $quotedManager = $manager.Replace("'", "''")
     @"
 function Invoke-RestMethod {
-    return @{ tag_name = '$Tag'; assets = @(@{ name = 'PaperView-win-x64.exe'; digest = 'sha256:$Digest'; browser_download_url = 'https://github.com/GRAAAA/Paper_Viewer/releases/download/$Tag/PaperView-win-x64.exe' }) }
+    return @{ tag_name = '$Tag'; assets = @(@{ name = 'PaperView-win-x64.exe'; size = (Get-Item -LiteralPath '$quotedExe').Length; digest = 'sha256:$Digest'; browser_download_url = 'https://github.com/GRAAAA/Paper_Viewer/releases/download/$Tag/PaperView-win-x64.exe' }) }
 }
-function Invoke-WebRequest { param(`$Uri, `$OutFile, `$Headers, `$TimeoutSec, [switch]`$UseBasicParsing) Copy-Item -LiteralPath '$quotedExe' -Destination `$OutFile }
+function New-Object {
+    param([string]`$TypeName, [string]`$ComObject)
+    if (`$TypeName -eq 'Net.WebClient') {
+        `$client = [PSCustomObject]@{ Headers = @{}; Inner = [Net.WebClient]::new() }
+        `$client | Add-Member ScriptMethod DownloadFileTaskAsync { param(`$Uri, `$OutFile) return `$this.Inner.DownloadFileTaskAsync([Uri]'$quotedExe', `$OutFile) }
+        `$client | Add-Member ScriptMethod CancelAsync { `$this.Inner.CancelAsync() }
+        `$client | Add-Member ScriptMethod Dispose { `$this.Inner.Dispose() }
+        return `$client
+    }
+    if (`$ComObject) { return Microsoft.PowerShell.Utility\New-Object -ComObject `$ComObject }
+    Microsoft.PowerShell.Utility\New-Object -TypeName `$TypeName
+}
 & '$quotedManager' @args
 exit `$LASTEXITCODE
 "@ | Set-Content -LiteralPath $mock

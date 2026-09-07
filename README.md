@@ -21,7 +21,7 @@ History and thumbnails are stored in `%LOCALAPPDATA%\PaperView`. Removing a rece
 Download `PaperView-win-x64.exe` from a published GitHub Release. You can double-click it to run the viewer without installing, or install from PowerShell:
 
 ```powershell
-.\PaperView-win-x64.exe install | Out-String
+.\PaperView-win-x64.exe install | Out-Host
 ```
 
 Installation is per-user, requires no administrator privileges, and bundles .NET. It installs into `%LOCALAPPDATA%\Programs\PaperView`, creates a Start menu shortcut, and adds its `bin` directory to your user PATH. Open a new terminal after installation:
@@ -36,7 +36,9 @@ paperview uninstall
 
 Close the viewer before updating or uninstalling. Updates use the latest stable release in `GRAAAA/Paper_Viewer`, require a newer `vMAJOR.MINOR.PATCH` tag and a `PaperView-win-x64.exe` asset with a GitHub SHA-256 digest, and verify both the checksum and executable version before replacing the installed file. Network errors or invalid downloads leave the installed executable intact. A release must be published before online updating can work.
 
-Uninstall preserves PDFs, history, thumbnails, and preferences. Maintenance results are recorded in `%LOCALAPPDATA%\PaperView\maintenance.log`. Use `paperview` for maintenance so the terminal waits for completion and returns the command's exit code. Calling the installed `.exe` directly with a maintenance command schedules the operation after that executable exits; check the log for its result. The `| Out-String` above makes PowerShell wait for output from the downloaded GUI executable.
+Install, update, and uninstall display a 0–100% progress bar with the current step. Installation and removal percentages represent completed stages; the download portion advances using bytes received and the release asset size. An unknown download size stays at the download stage until the transfer finishes. Failed operations stop before 100%. Version and help commands return immediately without a progress bar. Interactive terminals redraw the same line; redirected output emits progress lines for scripts and logs.
+
+Uninstall preserves PDFs, history, thumbnails, and preferences. Maintenance results are recorded in `%LOCALAPPDATA%\PaperView\maintenance.log`. Use `paperview` for maintenance so the terminal waits for completion and returns the command's exit code. Calling the installed `.exe` directly with a maintenance command schedules the operation after that executable exits; check the log for its result. The `| Out-Host` above makes PowerShell wait for the downloaded GUI executable and display progress as it arrives; `Out-String` buffers output until completion.
 
 ## Build a distributable executable
 

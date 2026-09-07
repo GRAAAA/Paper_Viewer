@@ -60,7 +60,11 @@ internal static class Program
             using (var destination = File.Create(script)) resource.CopyTo(destination);
             var installed = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "PaperView", "PaperView.exe");
             var self = string.Equals(source, installed, StringComparison.OrdinalIgnoreCase);
-            var start = new ProcessStartInfo("powershell.exe") { UseShellExecute = false, CreateNoWindow = true };
+            var start = new ProcessStartInfo("powershell.exe")
+            {
+                UseShellExecute = false, CreateNoWindow = true,
+                RedirectStandardOutput = !self, RedirectStandardError = !self
+            };
             foreach (var argument in new[] { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script, "-Command", command, "-Source", source, "-CleanupScript" })
                 start.ArgumentList.Add(argument);
             if (self)
@@ -71,7 +75,12 @@ internal static class Program
             }
             using var process = Process.Start(start)!;
             if (self) return 0;
+            // GUI executables do not reliably pass console handles to a hidden child.
+            // Explicitly relay both streams as they arrive, including progress/errors.
+            var stdoutRelay = process.StandardOutput.BaseStream.CopyToAsync(Console.OpenStandardOutput());
+            var stderrRelay = process.StandardError.BaseStream.CopyToAsync(Console.OpenStandardError());
             process.WaitForExit();
+            Task.WhenAll(stdoutRelay, stderrRelay).GetAwaiter().GetResult();
             return process.ExitCode;
         }
         catch (Exception ex)

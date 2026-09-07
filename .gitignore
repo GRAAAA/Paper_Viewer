@@ -1,0 +1,11 @@
+bin/
+obj/
+.dotnet/
+.packages/
+artifacts/
+*.user
+.tools/
+.vs/
+*.zip
+*.dmp
+TestResults/

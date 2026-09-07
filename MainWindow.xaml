@@ -1,0 +1,156 @@
+<Window x:Class="PaperView.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="PaperView" Width="1220" Height="820" MinWidth="850" MinHeight="580" Background="{DynamicResource AppBackground}" FontFamily="Segoe UI" FontSize="14" WindowStartupLocation="CenterScreen" AllowDrop="True" Drop="Window_Drop" PreviewKeyDown="Window_KeyDown">
+  <Grid Background="{DynamicResource AppBackground}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition x:Name="SidebarColumn" Width="220" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+    <Border x:Name="Sidebar" Background="{DynamicResource PanelBackground}" BorderBrush="{DynamicResource Outline}" BorderThickness="0,0,1,0" Padding="22,30">
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Top">
+          <TextBlock Text="▤  PaperView" FontSize="25" FontWeight="SemiBold" />
+          <TextBlock Text="YOUR READING SPACE" FontSize="10" Foreground="{DynamicResource Muted}" Margin="0,7,0,42" />
+          <Button Content="▦   My library" Click="Home_Click" Background="{DynamicResource HoverBackground}" BorderThickness="0" HorizontalContentAlignment="Left" />
+          <Button Content="＋   Open PDF" Click="Open_Click" Background="Transparent" BorderThickness="0" Margin="0,12,0,0" />
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom" VerticalAlignment="Bottom">
+          <Border Background="{DynamicResource HoverBackground}" CornerRadius="10" Padding="15">
+            <StackPanel>
+              <TextBlock Text="A little less searching." FontWeight="SemiBold" />
+              <TextBlock Text="A little more reading." Foreground="{DynamicResource Muted}" Margin="0,4,0,0" />
+            </StackPanel>
+          </Border>
+          <TextBlock Text="LOCAL FILES · ONLY ON YOUR PC" FontSize="9" Foreground="{DynamicResource Muted}" Margin="0,20,0,0" />
+        </StackPanel>
+      </DockPanel>
+    </Border>
+    <Grid x:Name="ContentArea" Grid.Column="1" Margin="32,28">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+      <Grid x:Name="Dashboard">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid>
+          <StackPanel>
+            <TextBlock Text="My library" FontSize="32" FontWeight="SemiBold" />
+            <TextBlock Text="Your documents, right where you left them." Foreground="{DynamicResource Muted}" Margin="0,8,0,0" />
+          </StackPanel>
+          <Button Click="Open_Click" HorizontalAlignment="Right" VerticalAlignment="Center" Background="{DynamicResource Accent}" Foreground="{DynamicResource AccentText}" BorderThickness="0" Padding="22,12">
+            <TextBlock Text="＋  Open PDF" Foreground="{DynamicResource AccentText}" />
+          </Button>
+        </Grid>
+        <Border Grid.Row="1" Background="{DynamicResource PanelBackground}" CornerRadius="14" Padding="26" Margin="0,28,0,28">
+          <Grid>
+            <StackPanel>
+              <TextBlock Text="Make room for a good read." FontSize="23" FontWeight="SemiBold" />
+              <TextBlock Text="Drop a PDF here to get started. We’ll save your place." Foreground="{DynamicResource Muted}" Margin="0,8,0,0" />
+            </StackPanel>
+            <TextBlock Text="▤" FontSize="50" Foreground="{DynamicResource Muted}" HorizontalAlignment="Right" Margin="0,-10,8,-8" />
+          </Grid>
+        </Border>
+        <Grid Grid.Row="2" Margin="0,0,0,18">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="180" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock Text="Recently opened" FontSize="19" FontWeight="SemiBold" />
+            <TextBlock x:Name="CountLabel" Foreground="{DynamicResource Muted}" Margin="12,4,0,0" />
+          </StackPanel>
+          <TextBox x:Name="SearchBox" Grid.Column="1" TextChanged="Search_Changed" ToolTip="Search recent PDFs by name" Tag="Search PDFs…" AutomationProperties.Name="Search recent PDFs" />
+          <Button Grid.Column="2" Content="Clear history" Click="Clear_Click" Margin="12,0,0,0" />
+        </Grid>
+        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <Grid>
+            <ItemsControl x:Name="RecentItems">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <WrapPanel />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Width="218" Margin="0,0,18,20" CornerRadius="11" BorderBrush="{DynamicResource Outline}" BorderThickness="1" Background="{DynamicResource Surface}">
+                    <StackPanel>
+                      <Button Click="Recent_Click" Tag="{Binding}" Padding="0" BorderThickness="0" Background="Transparent" ToolTip="{Binding FilePath}" AutomationProperties.Name="{Binding Name}">
+                        <StackPanel Width="216">
+                          <Border Background="{DynamicResource CanvasBackground}" Height="204" CornerRadius="10,10,0,0" Padding="24,17">
+                            <Image Source="{Binding Thumbnail}" Stretch="Uniform" />
+                          </Border>
+                          <StackPanel Margin="15,14,15,6">
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Details}" FontSize="11" Foreground="{DynamicResource Muted}" Margin="0,7,0,0" />
+                            <TextBlock Text="{Binding ViewedLabel}" FontSize="11" Foreground="{DynamicResource Muted}" Margin="0,5,0,0" />
+                          </StackPanel>
+                        </StackPanel>
+                      </Button>
+                      <Button Content="Remove from recents" Click="Remove_Click" Tag="{Binding}" FontSize="10" Foreground="{DynamicResource Muted}" BorderThickness="0" Background="Transparent" Padding="8,6" HorizontalAlignment="Left" Margin="7,0,0,8" />
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,48,0,0">
+              <TextBlock Text="Your next read starts here" FontSize="22" HorizontalAlignment="Center" />
+              <TextBlock x:Name="EmptyLabel" Text="Open a PDF to see its preview in your library." Foreground="{DynamicResource Muted}" Margin="0,12,0,22" />
+              <Button Content="Browse files" Click="Open_Click" HorizontalAlignment="Center" />
+            </StackPanel>
+          </Grid>
+        </ScrollViewer>
+      </Grid>
+      <Grid x:Name="Reader" Visibility="Collapsed">
+        <Grid.Resources>
+          <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Padding" Value="9,5" />
+            <Setter Property="FontSize" Value="12" />
+          </Style>
+        </Grid.Resources>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Border Background="{DynamicResource AppBackground}" BorderBrush="{DynamicResource Outline}" BorderThickness="0,0,0,1" Padding="8,5">
+          <WrapPanel VerticalAlignment="Center">
+            <Button Content="Library" Click="Home_Click" ToolTip="Return to dashboard (Escape)" Margin="0,0,6,0" />
+            <Button Content="☰" Click="SidebarToggle_Click" ToolTip="Toggle sidebar (Ctrl+B)" Margin="0,0,6,0" />
+            <Button Content="Open" Click="Open_Click" ToolTip="Open PDF (Ctrl+O)" Margin="0,0,18,0" />
+            <Button x:Name="PreviousButton" Content="←" Click="Previous_Click" ToolTip="Previous page" />
+            <TextBox x:Name="PageBox" Width="48" Margin="6,0" Padding="5,3" Text="1" KeyDown="PageBox_KeyDown" AutomationProperties.Name="Page number, press Enter to go" />
+            <TextBlock x:Name="PageCountLabel" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12" />
+            <Button x:Name="NextButton" Content="→" Click="Next_Click" ToolTip="Next page" />
+            <Button Content="−" Click="ZoomOut_Click" Margin="18,0,6,0" ToolTip="Zoom out" />
+            <TextBlock x:Name="ZoomLabel" VerticalAlignment="Center" FontSize="12" />
+            <Button Content="＋" Click="ZoomIn_Click" Margin="6,0" ToolTip="Zoom in" />
+            <Button Content="Fit width" Click="Fit_Click" ToolTip="Fit each page to the window width" />
+            <Button x:Name="LoupeButton" Content="Loupe" Click="Loupe_Click" Margin="12,0,6,0" ToolTip="Enable loupe, then press and hold on a page to magnify. Release to return." />
+            <Button x:Name="ReaderThemeButton" Content="Dark mode" Click="Theme_Click" ToolTip="Switch light / dark theme" />
+          </WrapPanel>
+        </Border>
+        <Grid x:Name="ReaderSurface" Grid.Row="1" ClipToBounds="True" PreviewMouseLeftButtonDown="Reader_MouseDown" PreviewMouseLeftButtonUp="Reader_MouseUp" PreviewMouseMove="Reader_MouseMove" LostMouseCapture="Reader_LostCapture">
+          <ScrollViewer x:Name="PageScroller" Background="{DynamicResource CanvasBackground}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Visible" ScrollChanged="PageScroller_ScrollChanged" CanContentScroll="False">
+            <Canvas x:Name="PagesCanvas" HorizontalAlignment="Center" />
+          </ScrollViewer>
+          <Canvas x:Name="LoupeOverlay" IsHitTestVisible="False">
+            <Ellipse x:Name="LoupeLens" Width="240" Height="240" Stroke="{DynamicResource Accent}" StrokeThickness="3" Visibility="Collapsed" />
+          </Canvas>
+        </Grid>
+      </Grid>
+      <DockPanel x:Name="DashboardFooter" Grid.Row="1" Margin="0,16,0,0">
+        <Button x:Name="SidebarToggle" Content="Hide sidebar" Click="SidebarToggle_Click" ToolTip="Show or hide sidebar (Ctrl+B)" DockPanel.Dock="Left" Padding="10,6" Margin="0,0,14,0" />
+        <Button x:Name="DashboardThemeButton" DockPanel.Dock="Right" Content="Dark mode" Click="Theme_Click" Padding="10,6" Margin="12,0,0,0" />
+        <TextBlock x:Name="StatusLabel" Text="Ready  ·  Ctrl+O to open a PDF" Foreground="{DynamicResource Muted}" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap" />
+      </DockPanel>
+    </Grid>
+    <TextBlock x:Name="AuthorCredit" Grid.Row="1" Grid.ColumnSpan="2" Text="by GRAAAA" FontSize="10" Foreground="{DynamicResource Muted}" HorizontalAlignment="Center" Margin="0,3,0,4" />
+  </Grid>
+</Window>

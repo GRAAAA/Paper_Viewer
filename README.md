@@ -16,13 +16,37 @@ Open a PDF with **Open PDF**, drop a file on the window, or pass its path on the
 
 History and thumbnails are stored in `%LOCALAPPDATA%\PaperView`. Removing a recent entry or clearing history does not delete the original PDF. The library keeps up to 100 recent documents. PDFs are processed locally using Windows.Data.Pdf; no document upload or server is needed.
 
-## Publish a standalone Windows build
+## Install and manage PaperView
+
+Download `PaperView-win-x64.exe` from a published GitHub Release. You can double-click it to run the viewer without installing, or install from PowerShell:
 
 ```powershell
-dotnet publish PaperView.csproj -c Release -r win-x64 --self-contained true -o artifacts/PaperView
+.\PaperView-win-x64.exe install | Out-String
 ```
 
-Launch `artifacts\PaperView\PaperView.exe`. Distribute the entire folder.
+Installation is per-user, requires no administrator privileges, and bundles .NET. It installs into `%LOCALAPPDATA%\Programs\PaperView`, creates a Start menu shortcut, and adds its `bin` directory to your user PATH. Open a new terminal after installation:
+
+```powershell
+paperview --version
+paperview --help
+paperview "C:\Documents\example.pdf"
+paperview update
+paperview uninstall
+```
+
+Close the viewer before updating or uninstalling. Updates use the latest stable release in `GRAAAA/Paper_Viewer`, require a newer `vMAJOR.MINOR.PATCH` tag and a `PaperView-win-x64.exe` asset with a GitHub SHA-256 digest, and verify both the checksum and executable version before replacing the installed file. Network errors or invalid downloads leave the installed executable intact. A release must be published before online updating can work.
+
+Uninstall preserves PDFs, history, thumbnails, and preferences. Maintenance results are recorded in `%LOCALAPPDATA%\PaperView\maintenance.log`. Use `paperview` for maintenance so the terminal waits for completion and returns the command's exit code. Calling the installed `.exe` directly with a maintenance command schedules the operation after that executable exits; check the log for its result. The `| Out-String` above makes PowerShell wait for output from the downloaded GUI executable.
+
+## Build a distributable executable
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish.ps1 -Version 1.0.0
+```
+
+Distribute **only** `artifacts\release-1.0.0\PaperView-win-x64.exe`. It is a self-contained single-file Windows x64 build; users do not need the project files or a separate .NET installation. Native runtime components extract automatically at launch. `SHA256SUMS.txt` is also generated for download verification.
+
+For a later release, rerun with a higher version, then manually publish the executable and checksum file in GitHub Releases with the matching tag (for example, `v1.0.1`). The script only creates local artifacts; it does not commit, push, tag, or publish. Builds are currently unsigned, so Windows may show a publisher warning when downloaded.
 
 ## Scope
 
@@ -38,9 +62,12 @@ Rendering API reference: https://learn.microsoft.com/en-us/uwp/api/windows.data.
 
 ```powershell
 dotnet run --project tests/Smoke.csproj -c Release
+powershell -NoProfile -ExecutionPolicy Bypass -File tests/Packaging.ps1
 ```
 
 The smoke checks use generated PDFs and isolated data under the test output directory. They exercise rendering, continuous navigation, cached thumbnails, saved history, themes, and the loupe without opening a visible test window.
+
+Packaging checks require the local 1.0.0 release build. They use isolated installation folders and shortcuts under `artifacts`, skip user PATH changes, and simulate GitHub responses locally. They cover CLI output and exit codes, repeated installation, a successful update, checksum and version rejection, and uninstall file preservation. No release is uploaded or downloaded by these tests.
 
 - `App.xaml`, `MainWindow.xaml`, `Theme.xaml`: startup, layout, and monochrome control styles.
 - `UI/`: continuous reading, theme switching, and loupe interactions.
